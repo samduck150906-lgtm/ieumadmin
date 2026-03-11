@@ -1,9 +1,8 @@
-# monorepo: base 미설정 시 루트에서 npm install 실행 (patch-package 등 정상 설치)
-# Netlify UI에서 Package directory를 admin-web으로 설정할 것
-# build:admin = @ieum/shared + admin-web 빌드 → admin-web/.next 출력
+# monorepo: 루트에서 build:admin 실행 → apps/admin-web/.next 출력
+# publish는 빌드 루트 기준 경로 (packagePath: apps/admin-web 시 repo 루트가 base)
 [build]
   command = "npm run build:admin"
-  publish = ".next"
+  publish = "apps/admin-web/.next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
