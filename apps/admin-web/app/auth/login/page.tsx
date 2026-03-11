@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 
 export default function LoginPage() {
   const { loading, signIn, signInWithKakao } = useAuth();
@@ -17,6 +17,59 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [kakaoLoading, setKakaoLoading] = useState(false);
+
+  // 비밀번호 찾기 모달
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotName, setForgotName] = useState('');
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+    if (!forgotName.trim()) {
+      setForgotError('이름을 입력해주세요.');
+      return;
+    }
+    if (!forgotPhone.trim()) {
+      setForgotError('휴대폰 번호를 입력해주세요.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: forgotName.trim(), phone: forgotPhone.trim() }),
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        setForgotError(data.error || '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.');
+      } else if (!res.ok) {
+        setForgotError(data.error || '처리 중 오류가 발생했습니다.');
+      } else if (data.code === 'not_found') {
+        setForgotError('일치하는 사용자 정보를 찾을 수 없습니다.');
+      } else if (data.success) {
+        setForgotSuccess(true);
+      } else {
+        setForgotError(data.error || '처리 중 오류가 발생했습니다.');
+      }
+    } catch {
+      setForgotError('네트워크 오류가 발생했습니다. 다시 시도해 주세요.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotName('');
+    setForgotPhone('');
+    setForgotError('');
+    setForgotSuccess(false);
+  };
 
   // OAuth 콜백 에러 표시 (카카오 KOE205, KOE006, 미가입 등) / 회원가입 완료 안내
   useEffect(() => {
@@ -165,6 +218,23 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+          <div style={{ textAlign: 'right', marginBottom: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#4f46e5',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                padding: '2px 0',
+                textDecoration: 'underline',
+              }}
+            >
+              비밀번호 찾기
+            </button>
+          </div>
           <button
             type="submit"
             className="btn btn-primary"
@@ -278,6 +348,113 @@ export default function LoginPage() {
           관리자 role 확인 (로그인 후)
         </Link>
       </p>
+
+      {/* 비밀번호 찾기 모달 */}
+      {showForgotModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeForgotModal(); }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '28px 24px',
+              width: '100%',
+              maxWidth: '400px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#111827', margin: 0 }}>비밀번호 찾기</h2>
+              <button
+                type="button"
+                onClick={closeForgotModal}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: '4px' }}
+                aria-label="닫기"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {forgotSuccess ? (
+              <div>
+                <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                  임시 비밀번호가 문자로 발송되었습니다.<br />
+                  수신한 임시 비밀번호로 로그인 후 비밀번호를 변경해 주세요.
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={closeForgotModal}
+                  style={{ width: '100%' }}
+                >
+                  확인
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword}>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '16px', lineHeight: 1.5 }}>
+                  가입 시 등록한 이름과 휴대폰 번호를 입력하시면<br />임시 비밀번호를 문자로 발송해 드립니다.
+                </p>
+                {forgotError && (
+                  <div style={{ background: '#fff5f5', color: '#c53030', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.875rem' }}>
+                    {forgotError}
+                  </div>
+                )}
+                <div className="input-group">
+                  <label htmlFor="forgot-name">이름</label>
+                  <input
+                    id="forgot-name"
+                    type="text"
+                    placeholder="홍길동"
+                    value={forgotName}
+                    onChange={(e) => setForgotName(e.target.value)}
+                    disabled={forgotLoading}
+                    required
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="forgot-phone">휴대폰 번호</label>
+                  <input
+                    id="forgot-phone"
+                    type="tel"
+                    placeholder="01012345678"
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    disabled={forgotLoading}
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={forgotLoading}
+                  style={{ width: '100%', marginTop: '8px' }}
+                >
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" aria-hidden />
+                      <span>처리 중...</span>
+                    </>
+                  ) : (
+                    <span>임시 비밀번호 발송</span>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
