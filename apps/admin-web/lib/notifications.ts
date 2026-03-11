@@ -74,6 +74,21 @@ export const TEMPLATES = {
     title: '출금 완료',
     template: `{{공인중개사명}}님, {{금액}} 출금이 완료되었습니다.\n\n입금 계좌: {{은행}} {{계좌번호}}`,
   },
+  commission_settled: {
+    code: 'commission_settled',
+    title: '수수료 정산 완료',
+    template: `{{공인중개사명}}님, {{정산기간}} 수수료 {{금액}} 정산이 완료되었습니다.\n\n감사합니다.`,
+  },
+  withdrawal_rejected: {
+    code: 'withdrawal_rejected',
+    title: '출금 반려',
+    template: `{{공인중개사명}}님, {{금액}} 출금 신청이 반려되었습니다.\n\n사유: {{사유}}\n\n자세한 문의는 고객센터로 연락해 주세요.`,
+  },
+  system_notice: {
+    code: 'system_notice',
+    title: '시스템 공지',
+    template: `[이음 공지] {{제목}}\n\n{{내용}}`,
+  },
 };
 
 // 알림톡 발송
