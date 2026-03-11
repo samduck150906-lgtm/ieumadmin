@@ -1,0 +1,19 @@
+{
+  "name": "ieumadmin",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0 <23.0.0"
+  },
+  "workspaces": [
+    "apps/admin-web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "cd apps/admin-web && npm run dev",
+    "build": "npm install && npm run build --workspace=@ieum/shared && npm run build --workspace=admin-web",
+    "start": "cd apps/admin-web && npm run start",
+    "lint": "npm run lint --workspace=admin-web",
+    "test": "npm run test --workspace=admin-web"
+  }
+}

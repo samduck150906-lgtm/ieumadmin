@@ -1,0 +1,5 @@
+{"name":"@ieum/shared","version":"1.0.0","private":true,"description":"이음 플랫폼 공통: 타입, enum, 마스킹, 권한, API 스키마","main":"dist/index.js","module":"dist/index.mjs","types":"dist/index.d.ts","exports":{
+    ".":{"types":"./dist/index.d.ts","import":"./dist/index.mjs","require":"./dist/index.js"},
+    "./design-system.css":"./src/design-system/css-variables.css",
+    "./tailwind.preset.js":"./src/design-system/tailwind.preset.js"
+  },"files":["dist","src"],"scripts":{"build":"tsup src/index.ts --format cjs,esm --dts --clean","dev":"tsup src/index.ts --format cjs,esm --dts --watch"},"dependencies":{"zod":"^3.22.4"},"devDependencies":{"tsup":"^8.0.1","typescript":"^5"},"peerDependenciesMeta":{},"optionalDependencies":{"@rollup/rollup-linux-x64-gnu":"^4.59.0","@rollup/rollup-win32-x64-msvc":"^4.59.0"}}

@@ -1,0 +1,124 @@
+/**
+ * 이음(IEUM) 디자인 시스템 — CSS 변수 (단일 소스)
+ * 자체 CSS 기반 리디자인 — 시맨틱 토큰
+ * 웹·앱 공통: landing-page, admin-web, mobile-app
+ */
+:root {
+  /* ========== Primary (블루 — 메인 액션) ========== */
+  --color-primary-900: #0F2D6E;
+  --color-primary-700: #1B4DB8;
+  --color-primary-600: #2563EB;
+  --color-primary-500: #3B82F6;
+  --color-primary-400: #60A5FA;
+  --color-primary-300: #93C5FD;
+  --color-primary-200: #BFDBFE;
+  --color-primary-100: #DBEAFE;
+  --color-primary-50: #EFF6FF;
+
+  /* ========== Secondary (파란색 계열 — primary와 통일) ========== */
+  --color-secondary-900: #0F2D6E;
+  --color-secondary-700: #1B4DB8;
+  --color-secondary-600: #2563EB;
+  --color-secondary-500: #3B82F6;
+  --color-secondary-400: #60A5FA;
+  --color-secondary-300: #93C5FD;
+  --color-secondary-200: #BFDBFE;
+  --color-secondary-100: #DBEAFE;
+  --color-secondary-50: #EFF6FF;
+
+  /* ========== Neutral ========== */
+  --color-neutral-950: #0C1222;
+  --color-neutral-900: #1A2332;
+  --color-neutral-800: #2D3A4F;
+  --color-neutral-700: #4A5568;
+  --color-neutral-600: #64748B;
+  --color-neutral-500: #94A3B8;
+  --color-neutral-400: #CBD5E1;
+  --color-neutral-300: #E2E8F0;
+  --color-neutral-200: #F1F5F9;
+  --color-neutral-100: #F8FAFC;
+  --color-neutral-50: #FAFBFC;
+
+  /* ========== Status ========== */
+  --color-success: #059669;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* ========== Surface ========== */
+  --surface-page: #F8FAFC;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-muted: #F1F5F9;
+  --surface-overlay: rgba(15, 23, 42, 0.6);
+
+  /* ========== Typography ========== */
+  --font-sans: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-display: 3.5rem;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+
+  /* ========== Spacing (4px grid) ========== */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ========== Radius ========== */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ========== Shadow ========== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.25);
+
+  /* ========== Animation ========== */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========== Layout ========== */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --header-height: 56px;
+  --content-max: 1280px;
+}
