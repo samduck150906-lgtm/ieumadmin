@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
 import { useSidebarState } from '@/components/SidebarStateProvider';
 import { getRoleTitle } from '@/lib/admin-nav';
@@ -9,6 +10,27 @@ import Sidebar from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { Loader2, Menu, Bell } from 'lucide-react';
 import Link from 'next/link';
+
+/** useSearchParams Suspense fallback — 레이아웃 시프트 방지 */
+function SidebarFallback({ mode, collapsed }: { mode: 'desktop' | 'drawer'; collapsed?: boolean }) {
+  if (mode === 'drawer') return null;
+  return (
+    <aside
+      className={`admin-sidebar desktop ${collapsed ? 'collapsed' : ''}`}
+      aria-hidden
+      role="presentation"
+    >
+      <div className="admin-sidebar-brand flex-shrink-0 flex items-center min-w-0" style={{ gap: collapsed ? 0 : 14 }}>
+        <div className="admin-sidebar-brand-logo" aria-hidden>
+          <Image src="/logo.png" alt="" width={44} height={44} className="w-full h-full object-contain" />
+        </div>
+      </div>
+      <div className="admin-sidebar-content flex flex-col flex-1 items-center justify-center py-8">
+        <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: 'rgba(255,255,255,0.6)' }} strokeWidth={2} />
+      </div>
+    </aside>
+  );
+}
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -108,16 +130,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="admin-root" data-theme="dashboard">
-      <Sidebar
-        mode="desktop"
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      />
-      <Sidebar
-        mode="drawer"
-        mobileOpen={sidebarOpen}
-        onMobileClose={() => setSidebarOpen(false)}
-      />
+      <Suspense fallback={<SidebarFallback mode="desktop" collapsed={sidebarCollapsed} />}>
+        <Sidebar
+          mode="desktop"
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+        <Sidebar
+          mode="drawer"
+          mobileOpen={sidebarOpen}
+          onMobileClose={() => setSidebarOpen(false)}
+        />
+      </Suspense>
       <div className={`admin-root-inner ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <header className="admin-header">
           <button

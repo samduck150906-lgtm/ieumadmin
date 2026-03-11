@@ -10,15 +10,6 @@ import { showError } from '@/lib/toast';
 import { getRoleTitle } from '@/lib/admin-nav';
 import { ADMIN_NAV_ITEMS, ADMIN_SPEC_NAV_ITEMS, NavItem } from '@/lib/admin-nav';
 
-/** Safe wrapper that avoids Suspense boundary flicker for useSearchParams */
-function useSafeSearchParams(): URLSearchParams | null {
-  try {
-    return useSearchParams();
-  } catch {
-    return null;
-  }
-}
-
 function groupNavItems(items: NavItem[]): { groupLabel: string | null; items: NavItem[] }[] {
   const groups: { groupLabel: string | null; items: NavItem[] }[] = [];
   let currentLabel: string | null = null;
@@ -129,7 +120,7 @@ export default function Sidebar({
   onCollapsedChange,
 }: SidebarProps) {
   const pathname = usePathname();
-  const searchParams = useSafeSearchParams();
+  const searchParams = useSearchParams();
   const { user, session, signOut } = useAuth();
   const roleTitle = user ? getRoleTitle(user.role) : undefined;
   const isAdmin = user?.role === 'admin';

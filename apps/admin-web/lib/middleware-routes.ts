@@ -1,5 +1,6 @@
 /**
  * 미들웨어용 경로 판별 로직 — 단일 소스, 테스트 가능
+ * 화이트리스트 방식: 공개 경로만 명시, 나머지는 모두 보호(인증 필요)
  */
 
 export const LOGIN_PATHS = ['/login', '/auth/login'];
@@ -20,27 +21,22 @@ export function isPublicSignupPath(pathname: string): boolean {
   );
 }
 
-export const PROTECTED_PREFIXES = [
-  '/',
-  '/admin',
-  '/agent',
-  '/affiliate',
-  '/dashboard',
-  '/requests',
-  '/customers',
-  '/lead-stats',
-  '/members',
-  '/settings',
-  '/settlements',
-  '/payments',
-  '/notifications',
-  '/notices',
-  '/faqs',
-  '/complaints',
-  '/partner-applications',
-  '/db-consultation',
-  '/partner',
-];
+export function isLoginPath(pathname: string): boolean {
+  return LOGIN_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+/** 인증 없이 접근 가능한 경로 (화이트리스트). 이 외 모든 경로는 보호됨. */
+function isPublicPath(pathname: string): boolean {
+  if (isLoginPath(pathname)) return true;
+  if (pathname === AUTH_CALLBACK_PATH || pathname.startsWith(`${AUTH_CALLBACK_PATH}/`)) return true;
+  if (isPublicSignupPath(pathname)) return true;
+  return false;
+}
+
+/** 인증 필요 여부. 공개 경로가 아니면 모두 보호(로그인 유도). */
+export function isProtectedRoute(pathname: string): boolean {
+  return !isPublicPath(pathname);
+}
 
 /** 관리자·스태프만 접근 가능 (파트너 차단) */
 export const ADMIN_ONLY_PREFIXES = [
@@ -74,6 +70,14 @@ export const PARTNER_ALLOWED_PATHS = [
   '/partner/payments',
   '/partner/complaints',
   '/partner/change-password',
+  '/partner/receivables',
+  '/partner/profile',
+  '/partner/matching',
+  '/partner/invite',
+  '/partner/invitations',
+  '/partner/settlements',
+  '/partner/properties',
+  '/partner/mileage',
 ];
 
 export function isPartnerAllowedPath(pathname: string): boolean {
@@ -88,14 +92,6 @@ export const AGENT_ONLY_PREFIXES = ['/agent'];
 
 /** 제휴업체(partner)만 접근 가능 */
 export const AFFILIATE_ONLY_PREFIXES = ['/affiliate'];
-
-export function isLoginPath(pathname: string): boolean {
-  return LOGIN_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-}
-
-export function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
 
 export function isAdminOnlyRoute(pathname: string): boolean {
   return ADMIN_ONLY_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

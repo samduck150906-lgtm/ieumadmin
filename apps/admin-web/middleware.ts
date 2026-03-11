@@ -9,7 +9,6 @@ import {
   isPartnerAllowedPath,
   isPartnerOnlyRoute,
   isProtectedRoute,
-  isPublicSignupPath,
 } from '@/lib/middleware-routes';
 import { createCorsPreflightResponse } from '@/lib/api/cors';
 
@@ -48,7 +47,7 @@ export async function middleware(request: NextRequest) {
       console.warn(
         `⚠️ [admin-web middleware] Supabase 환경변수 누락: ${missing.join(', ')}. 인증이 비활성화됩니다. .env.local 또는 배포 대시보드에서 설정 후 재시작/재배포하세요.`
       );
-      if (isProtectedRoute(pathname) && !isPublicSignupPath(pathname)) {
+      if (isProtectedRoute(pathname)) {
         return NextResponse.redirect(createRedirect('/login', request));
       }
       return response;
@@ -139,7 +138,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // 비로그인 상태로 보호 경로 접근 시 로그인 페이지로
-    if (isProtectedRoute(pathname) && !hasSession && !isPublicSignupPath(pathname)) {
+    if (isProtectedRoute(pathname) && !hasSession) {
       return NextResponse.redirect(createRedirect('/login', request));
     }
 
@@ -187,21 +186,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(createRedirect('/admin', request));
     }
 
-    // /affiliate 접근 시 제휴업체(partner)는 /partner/dashboard로 리다이렉트 (레거시 경로 호환)
-    if (pathname.startsWith('/affiliate') && hasSession && authUser) {
-      try {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', authUser.id)
-          .single();
-        if (userData?.role === 'partner') {
-          return NextResponse.redirect(createRedirect('/partner/dashboard', request));
-        }
-      } catch {
-        // DB 조회 실패 시 그대로 진행
-      }
-    }
+    // /affiliate/* — 제휴업체(partner) 전용. partner는 /affiliate/dashboard 접근 허용 (AFFILIATE_NAV_ITEMS 링크)
+    // (기존: partner를 /partner/dashboard로 리다이렉트 → /affiliate/dashboard 직접 접근 시 404 가능성 제거)
 
     // 세션이 있는 경우 role 기반 경로 보호: /admin, /agent, /affiliate, /partner
     const roleProtected =
@@ -269,7 +255,7 @@ export async function middleware(request: NextRequest) {
     if (process.env.NODE_ENV === 'development') {
       console.error('[middleware] 런타임 에러:', err);
     }
-    if (isProtectedRoute(pathname) && !isPublicSignupPath(pathname)) {
+    if (isProtectedRoute(pathname)) {
       return NextResponse.redirect(createRedirect('/login', request));
     }
     return response;

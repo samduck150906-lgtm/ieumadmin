@@ -27,8 +27,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PROFILE_CACHE_KEY = 'ieum_user_profile';
-
 /**
  * 역할별 로그인 후 리다이렉트 경로.
  * DB user_role은 admin, staff, partner, realtor 유지. agent=realtor(공인중개사), affiliate=partner(제휴업체)는 경로/UI 별칭.
@@ -41,15 +39,21 @@ const ROLE_REDIRECT_PATH: Record<string, string> = {
 };
 const AUTH_INIT_TIMEOUT_MS = 6_000;
 
-/** 관리자 OAuth 콜백 기준 URL. Supabase Redirect URLs에 반드시 등록해야 함. */
-const ADMIN_CALLBACK_BASE = 'https://ieum2.netlify.app';
+/**
+ * 관리자 OAuth 콜백 기준 URL. NEXT_PUBLIC_SITE_URL 사용 (도메인 변경 시 .env 수정).
+ * Supabase Redirect URLs에 등록 필수.
+ */
+const getAdminCallbackBase = (): string =>
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  (typeof window !== 'undefined' ? window.location.origin.replace(/\/$/, '') : '') ||
+  'https://ieum2.netlify.app';
 
 /**
  * OAuth 콜백 URL. 관리자(admin-web) 전용 — 절대 랜딩(ieumm)으로 리다이렉트되지 않도록 방어.
- * Supabase Redirect URLs에 https://ieum2.netlify.app/auth/callback 등록 필수.
+ * Supabase Redirect URLs에 등록 필수.
  */
 const getAuthCallbackUrl = (): string => {
-  const callback = `${ADMIN_CALLBACK_BASE}/auth/callback`;
+  const callback = `${getAdminCallbackBase()}/auth/callback`;
   if (typeof window !== 'undefined') {
     const origin = window.location.origin.replace(/\/$/, '');
     // 현재 origin이 랜딩(ieumm)인 경우 — 관리자용이므로 admin URL 사용
@@ -62,29 +66,6 @@ const getAuthCallbackUrl = (): string => {
   if (siteUrl.includes('ieumm')) return callback;
   return `${siteUrl.replace(/\/$/, '')}/auth/callback`;
 };
-
-function getCachedProfile(): AuthUser | null {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(PROFILE_CACHE_KEY) : null;
-    if (!raw) return null;
-    return JSON.parse(raw) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedProfile(user: AuthUser | null) {
-  try {
-    if (typeof window === 'undefined') return;
-    if (user) {
-      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(PROFILE_CACHE_KEY);
-    }
-  } catch {
-    // localStorage unavailable
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -109,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const p = pathname ?? '';
       if (p.includes('/partner/apply')) {
         apply(null);
-        setCachedProfile(null);
         return; // 협력업체 신청 중 — 리다이렉트 없이 페이지 유지
       }
       if (p.includes('/members/partners/signup/kakao-complete')) {
@@ -120,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         if (!partnerRow) {
           apply(null);
-          setCachedProfile(null);
           return; // 프로필 미완료 — 리다이렉트 없이 페이지 유지
         }
       }
@@ -134,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           !realtorRow || !realtorRow.business_name || realtorRow.business_name === '미등록 사무소';
         if (incomplete) {
           apply(null);
-          setCachedProfile(null);
           return; // 프로필 미완료 — 리다이렉트 없이 페이지 유지
         }
       }
@@ -142,7 +120,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 제휴업체/공인중개사: 역할별 리다이렉트 (OAuth 콜백 후 포함)
       if (data.role === 'partner' || data.role === 'realtor') {
         apply(null);
-        setCachedProfile(null);
         router.push(ROLE_REDIRECT_PATH[data.role]);
         return;
       }
@@ -151,7 +128,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.role !== 'admin' && data.role !== 'staff') {
         await getSupabase().auth.signOut();
         apply(null);
-        setCachedProfile(null);
         return;
       }
 
@@ -174,21 +150,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canApproveSettlement,
       };
       apply(u);
-      setCachedProfile(u);
     } catch (err: unknown) {
       // 미가입 사용자(users 테이블에 없음): 세션 제거 후 로그인 유도
       const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : undefined;
       if (code === 'PGRST116') {
         await getSupabase().auth.signOut();
         apply(null);
-        setCachedProfile(null);
         return;
       }
       // DB 장애 시: 세션 제거 후 로그인 페이지로 리다이렉트 (조용한 실패 방지)
       console.error('[auth] loadUserProfile 실패:', err);
       await getSupabase().auth.signOut();
       apply(null);
-      setCachedProfile(null);
       if (typeof window !== 'undefined') {
         const msg = encodeURIComponent('사용자 정보를 불러오지 못했습니다. 다시 로그인해 주세요.');
         window.location.href = `/login?error=${msg}&error_code=profile_load`;
@@ -236,22 +209,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // getUser 행(hang) 시 리다이렉트 루프 방지:
-    // 타임아웃 경과 시 세션 사용자와 일치할 때만 캐시 적용
-    const timeoutId = setTimeout(async () => {
-      if (cancelled) return;
-      const cached = getCachedProfile();
-      if (!cached) {
-        applyLoading(false);
-        return;
-      }
-      try {
-        const { data: { user: currentUser } } = await getSupabase().auth.getUser();
-        if (currentUser && cached.id === currentUser.id) applyUser(cached);
-      } catch {
-        // 사용자 조회 실패 시 캐시 미적용
-      }
-      applyLoading(false);
+    // getUser 행(hang) 시 타임아웃 — localStorage 캐시 미사용 (role 조작 방지)
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) applyLoading(false);
     }, AUTH_INIT_TIMEOUT_MS);
 
     initAuth().finally(() => clearTimeout(timeoutId));
@@ -270,7 +230,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await loadUserProfile(s.user.id, applyUser);
         } else {
           applyUser(null);
-          setCachedProfile(null);
         }
 
         if (event === 'SIGNED_OUT') {
@@ -349,7 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       const supabase = getSupabase();
-      let redirectTo = getAuthCallbackUrl() || `${ADMIN_CALLBACK_BASE}/auth/callback`;
+      let redirectTo = getAuthCallbackUrl() || `${getAdminCallbackBase()}/auth/callback`;
       if (role) {
         const sep = redirectTo.includes('?') ? '&' : '?';
         redirectTo = `${redirectTo}${sep}kakao_signup_role=${role}`;
@@ -378,7 +337,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 로그아웃
   const signOut = async () => {
-    setCachedProfile(null);
     setUser(null);
     setSession(null);
     try {
