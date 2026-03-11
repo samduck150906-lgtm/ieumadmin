@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "cd apps/admin-web && npm run dev",
     "build": "npm install && npm run build --workspace=@ieum/shared && npm run build --workspace=admin-web",
+    "build:admin": "npm run build",
     "start": "cd apps/admin-web && npm run start",
     "lint": "npm run lint --workspace=admin-web",
     "test": "npm run test --workspace=admin-web"
